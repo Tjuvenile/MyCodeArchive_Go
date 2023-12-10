@@ -51,6 +51,7 @@ func GetRpcClient(addr string) (*ganeshaRpc, *fault.Fault) {
 	var opts []grpc.DialOption
 	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 
+	// 如果访问不到这个ip，就进行重试访问
 	retry := 0
 	for retry < 15 {
 		conn, err := grpc.Dial(fmt.Sprintf("%s:%d", addr, GaneshaRpcServerPort), opts...)

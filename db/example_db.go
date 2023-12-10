@@ -107,6 +107,7 @@ func (e *ExampleDb) Create() *fault.Fault {
 	return nil
 }
 
+// BatchCreate 批量创建
 func (e *ExampleDb) BatchCreate(clients []ExampleDb) *fault.Fault {
 	dbCon, sessionClose := DbConnect.GetSession(&SessionConfig{})
 	if dbCon == nil || dbCon.DbConn == nil {
@@ -153,6 +154,7 @@ func (e *ExampleDb) RemoveByName(name string) *fault.Fault {
 	return nil
 }
 
+// RemoveAllDataByTx 通过事务完成这件事
 func (e *ExampleDb) RemoveAllDataByTx() *fault.Fault {
 	dbCon, sessionClose := DbConnect.GetSession(&SessionConfig{})
 	if dbCon == nil || dbCon.DbConn == nil {
