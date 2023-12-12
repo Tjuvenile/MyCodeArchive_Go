@@ -112,7 +112,10 @@ func GetConnect() (*DbRepo, error) {
 	return &DbConnect, nil
 }
 
-func (d *DbRepo) CreateTable(table interface{}) int {
+// CreateTableAuto 也会判断表是否存在.但AutoMigrate会在表已经存在的情况下进行智能迁移。
+// 如果没有这个字段，将会创建这个字段，并且自动设置模型中定义的外键和索引。
+// 如果已经有这个字段了，也会进行智能迁移。会比对数据类型，大小，精度，是非为null，唯一性，默认值，注释，然后确保数据库中的列和gorm模型中定义的列保持一致。
+func (d *DbRepo) CreateTableAuto(table interface{}) int {
 	var err error
 	for i := 0; i < maxRetries; i++ {
 		if err = d.DbConn.Migrator().AutoMigrate(table); err == nil {
@@ -124,5 +127,21 @@ func (d *DbRepo) CreateTable(table interface{}) int {
 		return 1
 	}
 	logging.Log.Infof("Table creation succeeded.")
+	return 0
+}
+
+// CreateTable 0正常，1异常。 hastable用来判断表是否存在，当表不存在时才创建表，如果表存在，报错。
+func (d *DbRepo) CreateTable(table interface{}) int {
+	for i := 0; i < maxRetries; i++ {
+		if !d.DbConn.Migrator().HasTable(table) {
+			if err := d.DbConn.Migrator().CreateTable(table); err != nil {
+				logging.Log.Errorf("CreateTable: Table creation failed, %v", err)
+				return 1
+			}
+		} else {
+			logging.Log.Info("CreateTable: Table already exists.")
+			return 0
+		}
+	}
 	return 0
 }

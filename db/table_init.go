@@ -8,7 +8,7 @@ func CreateExampleDbTable() {
 	if err1 != nil {
 		logging.Log.Infof("fail to get db session")
 	}
-	if 0 != dbCon.CreateTable(&ExampleDb{}) {
+	if 0 != dbCon.CreateTableAuto(&ExampleDb{}) {
 		logging.Log.Infof("failed to create table ExampleDb")
 	}
 	//dbCon.DbConn.Commit()
