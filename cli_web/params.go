@@ -19,25 +19,13 @@ import (
 )
 
 const (
-	ZeroLen              = 0
-	OneLen               = 1
-	DescriptionLenMax    = 255
-	ExportCountMax       = 8192
-	NameLenMax           = 128
-	PolicyCountMax       = 256
-	PageSizeMax          = 100
-	InsertPoliciesLenMax = 10
-	IpsCountMax          = 20
-	Protocols            = "3"
-	FsalName             = "CEAFS"
-	RO                   = "RO"
-	RW                   = "RW"
-	NoneSquash           = "None"
-	RootSquash           = "Root_Squash"
-	AllSquash            = "All_Squash"
-	OrderDesc            = "DESC"
-	OrderAsc             = "ASC"
-	RootPath             = "/"
+	ZeroLen     = 0
+	NameLenMax  = 128
+	PageSizeMax = 100
+	RO          = "RO"
+	RW          = "RW"
+	OrderDesc   = "DESC"
+	OrderAsc    = "ASC"
 )
 
 type SearchApiParam struct {
@@ -69,25 +57,19 @@ func PerformCommonSetup(args []byte, funcName string) (interface{}, *fault.Fault
 	return params, nil
 }
 
-func getParam(args []byte, funcName string) (interface{}, error) {
+// 即便unmarshal失败了，也不会有空指针问题，都会变成类型零值
+func getParam(args []byte, funcName string) (unmarshalParam interface{}, err error) {
 	switch funcName {
 	case "Create":
 		fallthrough
 	case "Delete":
-		params := struct {
-		}{}
-		if err := json.Unmarshal(args, &params); err != nil {
-			logging.Log.Errorf("unmarshal parameters failed, %v", err)
-			return params, err
-		}
-		return params, nil
+		params := struct{}{}
+		err = json.Unmarshal(args, &params)
+		unmarshalParam = params
 	case "List":
 		params := SearchApiParam{}
 		params.PageSize, params.PageNumber = "-1", "-1"
-		err := json.Unmarshal(args, &params)
-		if err != nil {
-			return params, err
-		}
+		err = json.Unmarshal(args, &params)
 		listParams := SearchParam{
 			SortBy:      params.SortBy,
 			Order:       params.Order,
@@ -95,13 +77,11 @@ func getParam(args []byte, funcName string) (interface{}, error) {
 			FilterValue: params.FilterValue,
 		}
 		listParams.PageNumber, listParams.PageSize, err = mystring.ConvertPageToInt(params.PageNumber, params.PageSize)
-		if err != nil {
-			return SearchParam{}, err
-		}
-		return listParams, nil
+		unmarshalParam = listParams
 	default:
 		return nil, errors.New(fmt.Sprintf("invalid funcName %s", funcName))
 	}
+	return
 }
 
 // CheckAccessType 检查accessType参数 RO RW
