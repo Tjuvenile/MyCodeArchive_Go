@@ -13,6 +13,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/google/uuid"
 	"regexp"
 	"strconv"
 	"strings"
@@ -58,18 +59,17 @@ func PerformCommonSetup(args []byte, funcName string) (interface{}, *fault.Fault
 }
 
 // 即便unmarshal失败了，也不会有空指针问题，都会变成类型零值
-func getParam(args []byte, funcName string) (unmarshalParam interface{}, err error) {
+func getParam(args []byte, funcName string) (interface{}, error) {
 	switch funcName {
 	case "Create":
 		fallthrough
 	case "Delete":
 		params := struct{}{}
-		err = json.Unmarshal(args, &params)
-		unmarshalParam = params
+		return params, json.Unmarshal(args, &params)
 	case "List":
 		params := SearchApiParam{}
 		params.PageSize, params.PageNumber = "-1", "-1"
-		err = json.Unmarshal(args, &params)
+		err := json.Unmarshal(args, &params)
 		listParams := SearchParam{
 			SortBy:      params.SortBy,
 			Order:       params.Order,
@@ -77,11 +77,10 @@ func getParam(args []byte, funcName string) (unmarshalParam interface{}, err err
 			FilterValue: params.FilterValue,
 		}
 		listParams.PageNumber, listParams.PageSize, err = mystring.ConvertPageToInt(params.PageNumber, params.PageSize)
-		unmarshalParam = listParams
+		return params, err
 	default:
 		return nil, errors.New(fmt.Sprintf("invalid funcName %s", funcName))
 	}
-	return
 }
 
 // CheckAccessType 检查accessType参数 RO RW
@@ -189,4 +188,12 @@ func CheckOrderParam(order, sort string) *fault.Fault {
 		}
 	}
 	return nil
+}
+
+func GetUUID() uuid.UUID {
+	return uuid.New()
+}
+
+func GetUUIDString() string {
+	return uuid.NewString()
 }
