@@ -15,7 +15,8 @@ type ExampleDb struct {
 	Phone string
 }
 
-func (e *ExampleDb) QueryByName(name string) ([]ExampleDb, *fault.Fault) {
+// QueryByNameMut Name不唯一的情况
+func (e *ExampleDb) QueryByNameMut(name string) ([]ExampleDb, *fault.Fault) {
 	dbCon, sessionClose := DbConnect.GetSession(&SessionConfig{})
 	if dbCon == nil || dbCon.DbConn == nil {
 		logging.Log.Errorf("failed to get session from database")
@@ -25,13 +26,48 @@ func (e *ExampleDb) QueryByName(name string) ([]ExampleDb, *fault.Fault) {
 
 	var ret []ExampleDb
 	if err := dbCon.DbConn.Model(&ExampleDb{}).Where("BINARY name = ?", name).Find(&ret).Error; err != nil {
-		return []ExampleDb{}, fault.Err("failed to query export policies by export name", err, fault.QueryRecord)
+		return []ExampleDb{}, fault.Err("failed to query example by name", err, fault.QueryRecord)
 	}
 
 	if ret == nil {
 		return []ExampleDb{}, nil
 	}
 	return ret, nil
+}
+
+// QueryByNameUni Name唯一的情况
+func (e *ExampleDb) QueryByNameUni(name string) *fault.Fault {
+	dbCon, sessionClose := DbConnect.GetSession(&SessionConfig{})
+	if dbCon == nil || dbCon.DbConn == nil {
+		logging.Log.Errorf("failed to get session from database")
+		return fault.ConnectDB
+	}
+	defer sessionClose()
+
+	out := dbCon.DbConn.Model(&ExampleDb{}).Where("BINARY name = ?", name).Find(e)
+	if out.Error != nil {
+		return fault.Err(fmt.Sprintf("fail to query export %s", name), out.Error, fault.QueryRecord)
+	}
+	if out.RowsAffected == 0 {
+		return fault.NotExist("name", name)
+	}
+	return nil
+}
+
+func (e *ExampleDb) QueryFirst(name string) *fault.Fault {
+	dbCon, sessionClose := DbConnect.GetSession(&SessionConfig{})
+	if dbCon == nil || dbCon.DbConn == nil {
+		logging.Log.Errorf("failed to get session from database")
+		return fault.ConnectDB
+	}
+	defer sessionClose()
+
+	// first如果没查到，会直接报错
+	if err := dbCon.DbConn.Model(&ExampleDb{}).Where("BINARY name = ?", name).First(e).Error; err != nil {
+		return fault.Err("failed to query example by name", err, fault.QueryRecord)
+	}
+
+	return nil
 }
 
 func (e *ExampleDb) QueryCount(value *int64) *fault.Fault {
@@ -92,6 +128,24 @@ func (e *ExampleDb) QueryFirstName() *fault.Fault {
 	return nil
 }
 
+func (e *ExampleDb) QueryByIds(ids []string) (list []ExampleDb, err *fault.Fault) {
+	dbCon, sessionClose := DbConnect.GetSession(&SessionConfig{})
+	if dbCon == nil || dbCon.DbConn == nil {
+		logging.Log.Errorf("fail to get db session")
+		return []ExampleDb{}, fault.ConnectDB
+	}
+	defer sessionClose()
+
+	ret := dbCon.DbConn.Model(&ExampleDb{}).Find(&list, ids)
+	if ret.Error != nil {
+		return []ExampleDb{}, fault.Err("fail to query list", ret.Error, fault.QueryRecord)
+	}
+	if list == nil {
+		return []ExampleDb{}, nil
+	}
+	return list, nil
+}
+
 func (e *ExampleDb) Create() *fault.Fault {
 	dbCon, sessionClose := DbConnect.GetSession(&SessionConfig{})
 	if dbCon == nil || dbCon.DbConn == nil {
@@ -124,7 +178,7 @@ func (e *ExampleDb) BatchCreate(clients []ExampleDb) *fault.Fault {
 	return nil
 }
 
-func (e *ExampleDb) Remove() *fault.Fault {
+func (e *ExampleDb) Delete() *fault.Fault {
 	dbCon, sessionClose := DbConnect.GetSession(&SessionConfig{})
 	if dbCon == nil || dbCon.DbConn == nil {
 		logging.Log.Errorf("fail to get db session")
@@ -134,12 +188,12 @@ func (e *ExampleDb) Remove() *fault.Fault {
 
 	err := dbCon.DbConn.Where("BINARY name = ?", e.Name).Delete(&ExampleDb{}).Error
 	if err != nil {
-		return fault.Err(fmt.Sprintf("fail to remove policy %s", e.Name), err, fault.DeleteRecord)
+		return fault.Err(fmt.Sprintf("fail to delete policy %s", e.Name), err, fault.DeleteRecord)
 	}
 	return nil
 }
 
-func (e *ExampleDb) RemoveByName(name string) *fault.Fault {
+func (e *ExampleDb) DeleteByName(name string) *fault.Fault {
 	dbCon, sessionClose := DbConnect.GetSession(&SessionConfig{})
 	if dbCon == nil || dbCon.DbConn == nil {
 		logging.Log.Errorf("fail to get db session")
@@ -149,13 +203,13 @@ func (e *ExampleDb) RemoveByName(name string) *fault.Fault {
 
 	err := dbCon.DbConn.Where("BINARY name = ?", name).Delete(&ExampleDb{}).Error
 	if err != nil {
-		return fault.Err("fail to remove record from NfsExportPolicies", err, fault.DeleteRecord)
+		return fault.Err("fail to delete record from NfsExportPolicies", err, fault.DeleteRecord)
 	}
 	return nil
 }
 
-// RemoveAllDataByTx 通过事务完成这件事
-func (e *ExampleDb) RemoveAllDataByTx() *fault.Fault {
+// DeleteAllDataByTx 通过事务完成这件事
+func (e *ExampleDb) DeleteAllDataByTx() *fault.Fault {
 	dbCon, sessionClose := DbConnect.GetSession(&SessionConfig{})
 	if dbCon == nil || dbCon.DbConn == nil {
 		logging.Log.Errorf("fail to get db session")
@@ -177,11 +231,11 @@ func (e *ExampleDb) RemoveAllDataByTx() *fault.Fault {
 	err := tx.Delete(&ExampleDb{}).Error
 	if err != nil {
 		tx.Rollback()
-		return fault.Err("fail to remove record", err, fault.DeleteRecord)
+		return fault.Err("fail to delete record", err, fault.DeleteRecord)
 	}
 
 	if err = tx.Commit().Error; err != nil {
-		return fault.Err("fail to remove record from nfs", err, fault.DeleteRecord)
+		return fault.Err("fail to delete record from nfs", err, fault.DeleteRecord)
 	}
 	return nil
 }
@@ -219,6 +273,7 @@ func (e *ExampleDb) List(filterBy, filterValue, order, sortBy string, pageSize, 
 	return list, total, nil
 }
 
+// Update update格式：map[string]interface{}{"name" : "12345"}
 func (e *ExampleDb) Update(update map[string]interface{}, name string) *fault.Fault {
 	dbCon, sessionClose := DbConnect.GetSession(&SessionConfig{})
 	if dbCon == nil || dbCon.DbConn == nil {

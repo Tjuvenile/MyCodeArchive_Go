@@ -20,13 +20,14 @@ import (
 )
 
 const (
-	ZeroLen     = 0
-	NameLenMax  = 128
-	PageSizeMax = 100
-	RO          = "RO"
-	RW          = "RW"
-	OrderDesc   = "DESC"
-	OrderAsc    = "ASC"
+	ZeroLen       = 0
+	NameLenMax    = 128
+	PageSizeMax   = 100
+	RO            = "RO"
+	RW            = "RW"
+	OrderDesc     = "DESC"
+	OrderAsc      = "ASC"
+	ExampleDbName = "ExampleDb"
 )
 
 type SearchApiParam struct {
@@ -65,7 +66,8 @@ func getParam(args []byte, funcName string) (interface{}, error) {
 		fallthrough
 	case "Delete":
 		params := struct{}{}
-		return params, json.Unmarshal(args, &params)
+		err := json.Unmarshal(args, &params)
+		return params, err
 	case "List":
 		params := SearchApiParam{}
 		params.PageSize, params.PageNumber = "-1", "-1"
@@ -136,8 +138,8 @@ func CheckExampleCount() *fault.Fault {
 }
 
 // CheckSearchParam 检测Searchparam的相关内容，比如判空。FilterBy是一种限制，类似于精确查询。
-func CheckSearchParam(params SearchParam) *fault.Fault {
-	err := CheckOrderParam(params.Order, params.SortBy)
+func CheckSearchParam(params SearchParam, dbName string) *fault.Fault {
+	err := CheckOrderParam(params.Order, params.SortBy, dbName)
 	if err != nil {
 		return err
 	}
@@ -167,7 +169,7 @@ func CheckSearchParam(params SearchParam) *fault.Fault {
 }
 
 // CheckOrderParam sortBy是需要对一些参数进行校验的，如果不是这些参数，需要报错
-func CheckOrderParam(order, sort string) *fault.Fault {
+func CheckOrderParam(order, sort string, dbName string) *fault.Fault {
 	if strings.ToUpper(order) != OrderDesc && strings.ToUpper(order) != OrderAsc && order != "" {
 		return fault.InvalidParam("order", order)
 	}
@@ -176,16 +178,32 @@ func CheckOrderParam(order, sort string) *fault.Fault {
 			return fault.ParamEmpty("sort")
 		}
 		sortByLower := strings.ToLower(sort)
-		switch sortByLower {
-		case "name":
-		case "phone":
-		default:
-			return fault.InvalidParam("sort", sort)
+		switch dbName {
+		case ExampleDbName:
+			switch sortByLower {
+			case "name":
+			case "phone":
+			default:
+				return fault.InvalidParam("sort", sort)
+			}
 		}
 	} else {
 		if sort != "" {
 			return fault.ParamEmpty("order")
 		}
+	}
+	return nil
+}
+
+func CheckOrderParam2(order, sort string) *fault.Fault {
+	if strings.ToUpper(order) != OrderDesc && strings.ToUpper(order) != OrderAsc && order != "" {
+		return fault.InvalidParam("order", order)
+	}
+	if len(order) != 0 && len(sort) == 0 {
+		return fault.ParamEmpty("sort")
+	}
+	if len(sort) != 0 && len(order) == 0 {
+		return fault.ParamEmpty("order")
 	}
 	return nil
 }

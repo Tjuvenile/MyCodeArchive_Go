@@ -3,6 +3,7 @@ module MyCodeArchive_Go
 go 1.20
 
 require (
+	github.com/agiledragon/gomonkey v2.0.2+incompatible
 	github.com/google/uuid v1.3.1
 	go.uber.org/zap v1.26.0
 	google.golang.org/grpc v1.59.0

@@ -1,19 +1,50 @@
 package main
 
 import (
-	_ "MyCodeArchive_Go/logging"
 	"encoding/json"
 	"fmt"
 )
 
 func main() {
-	t1, err := s()
-	t2 := t1.(name)
-	fmt.Println(t1, "***", err)
-	fmt.Println(t2.N2)
-	fmt.Println(t2.TypeName)
-	fmt.Println(t2.N4)
+	t1 := name2{
+		N:  "123",
+		N2: "aaaa",
+	}
+	t2, _ := json.Marshal(t1)
+	s3, _ := s(&test3{bytesList: t2})
 
+	fmt.Println(s3)
+}
+
+// 假设有一个用于查询数据库的函数
+func queryDatabase() (string, error) {
+	fmt.Println("查询表1")
+	fmt.Println("查询表2")
+	// 实际情况中会有数据库查询逻辑
+	return "real data", nil
+}
+
+func sum() string {
+	return "haha1"
+}
+
+// 要测试的函数，依赖于queryDatabase
+func fetchDataFromDatabase() (string, error) {
+	fmt.Println("获取数据")
+	fmt.Println("进行操作")
+	s := sum()
+	fmt.Println(s)
+	data, err := queryDatabase()
+	if err != nil {
+		return "", err
+	}
+	fmt.Println("返回数据", data)
+	// 处理data的逻辑
+	return "Processed: " + data, nil
+}
+
+type test3 struct {
+	bytesList []byte
 }
 
 type name struct {
@@ -31,17 +62,7 @@ type name2 struct {
 	N2 string
 }
 
-func s() (interface{}, error) {
-	t1 := name2{
-		N:  "123",
-		N2: "aaaa",
-	}
-	t2, _ := json.Marshal(t1)
-
+func s(test3 *test3) (interface{}, error) {
 	params := name{}
-	err := json.Unmarshal(t2, &params)
-
-	var s3 interface{}
-	s3 = params
-	return s3, err
+	return params, json.Unmarshal(test3.bytesList, &params)
 }
