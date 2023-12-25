@@ -1,6 +1,8 @@
 package db
 
-import "MyCodeArchive_Go/logging"
+import (
+	"MyCodeArchive_Go/utils/logging"
+)
 
 // CreateExampleDbTable 创建一张表。如果表已存在，会出错，可以忽略，如果表不存在，直接创建
 func CreateExampleDbTable() {

@@ -1,7 +1,7 @@
-package strings
+package strings_
 
 import (
-	"MyCodeArchive_Go/logging"
+	"MyCodeArchive_Go/utils/logging"
 	"strconv"
 )
 

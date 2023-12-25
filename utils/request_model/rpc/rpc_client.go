@@ -1,9 +1,9 @@
 package rpc
 
 import (
-	"MyCodeArchive_Go/db"
-	"MyCodeArchive_Go/fault"
-	"MyCodeArchive_Go/logging"
+	"MyCodeArchive_Go/utils/fault"
+	"MyCodeArchive_Go/utils/logging"
+	"MyCodeArchive_Go/utils/request_model/db"
 	"context"
 	"errors"
 	"fmt"

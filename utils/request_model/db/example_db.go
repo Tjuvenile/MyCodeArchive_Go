@@ -1,18 +1,21 @@
 package db
 
 import (
-	"MyCodeArchive_Go/fault"
-	"MyCodeArchive_Go/logging"
-	"MyCodeArchive_Go/utils/math"
+	"MyCodeArchive_Go/utils/fault"
+	"MyCodeArchive_Go/utils/logging"
+	"MyCodeArchive_Go/utils/math_"
 	"fmt"
+	"time"
 )
 
 const BatchSizeMax = 100
 
 type ExampleDb struct {
-	Id    uint
-	Name  string
-	Phone string
+	Id         uint
+	Name       string
+	Phone      string
+	CreateTime time.Time `gorm:"autoCreateTime"` // 创建的时候自动填充时间戳
+	UpdateTime time.Time `gorm:"autoUpdateTime"` // 更新的时候自动填充时间戳
 }
 
 // QueryByNameMut Name不唯一的情况
@@ -260,7 +263,7 @@ func (e *ExampleDb) List(filterBy, filterValue, order, sortBy string, pageSize, 
 	}
 
 	if pageSize != -1 && pageNumber != -1 {
-		queryBuilder = queryBuilder.Offset(math.CalculateOffset(pageSize, pageNumber)).Limit(pageSize)
+		queryBuilder = queryBuilder.Offset(math_.CalculateOffset(pageSize, pageNumber)).Limit(pageSize)
 	}
 
 	if ret := queryBuilder.Find(&list); ret.Error != nil {

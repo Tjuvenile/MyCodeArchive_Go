@@ -1,4 +1,4 @@
-package math
+package math_
 
 // CalculateOffset 通过pageSize和pageNumber来计算偏移量
 func CalculateOffset(pageSize, pageNumber int) int {

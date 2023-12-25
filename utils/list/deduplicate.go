@@ -1,8 +1,8 @@
 package list
 
 import (
-	"MyCodeArchive_Go/db"
-	"MyCodeArchive_Go/fault"
+	"MyCodeArchive_Go/utils/fault"
+	"MyCodeArchive_Go/utils/request_model/db"
 	"fmt"
 )
 

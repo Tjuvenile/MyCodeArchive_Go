@@ -1,7 +1,7 @@
 package fault
 
 import (
-	"MyCodeArchive_Go/logging"
+	"MyCodeArchive_Go/utils/logging"
 	"fmt"
 )
 

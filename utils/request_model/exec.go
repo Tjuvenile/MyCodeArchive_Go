@@ -1,7 +1,7 @@
-package cli_web
+package request_model
 
 import (
-	"MyCodeArchive_Go/logging"
+	"MyCodeArchive_Go/utils/logging"
 	"bytes"
 	"fmt"
 	"os"

@@ -1,7 +1,7 @@
-package net
+package net_
 
 import (
-	"MyCodeArchive_Go/fault"
+	"MyCodeArchive_Go/utils/fault"
 	"errors"
 	"net"
 	"strings"

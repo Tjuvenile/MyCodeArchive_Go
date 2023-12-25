@@ -1,4 +1,4 @@
-package cli_web
+package request_model
 
 /**
 关于参数相关的校验和工具方法，放到这里。
@@ -6,10 +6,10 @@ package cli_web
 */
 
 import (
-	"MyCodeArchive_Go/db"
-	"MyCodeArchive_Go/fault"
-	"MyCodeArchive_Go/logging"
-	mystring "MyCodeArchive_Go/utils/strings"
+	"MyCodeArchive_Go/utils/fault"
+	"MyCodeArchive_Go/utils/logging"
+	"MyCodeArchive_Go/utils/request_model/db"
+	mystring "MyCodeArchive_Go/utils/strings_"
 	"encoding/json"
 	"errors"
 	"fmt"

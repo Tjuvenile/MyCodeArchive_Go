@@ -1,19 +1,27 @@
 package main
 
 import (
+	"MyCodeArchive_Go/request/dcs"
+	"MyCodeArchive_Go/utils/logging"
 	"encoding/json"
 	"fmt"
 )
 
 func main() {
-	t1 := name2{
-		N:  "123",
-		N2: "aaaa",
+	//formatter := txtfmt.NewTableFormatter("HAGroupName", "GatewayNum", "VipNum", "RecordNum")
+	//var table []txtfmt.TableRow
+	//row := txtfmt.TableRow{
+	//	"HAGroupName": "123",
+	//	"GatewayNum":  "456",
+	//	"VipNum":      "789",
+	//	"RecordNum":   "101112",
+	//}
+	//table = append(table, row)
+	//fmt.Println(formatter.Format(table))
+	err := dcs.CreateStrategyExe()
+	if err != nil {
+		logging.Log.Errorf(fmt.Sprintf("%+v", err))
 	}
-	t2, _ := json.Marshal(t1)
-	s3, _ := s(&test3{bytesList: t2})
-
-	fmt.Println(s3)
 }
 
 // 假设有一个用于查询数据库的函数
