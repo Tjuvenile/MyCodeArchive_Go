@@ -68,7 +68,6 @@ func (d *DbRepo) GetConnect() *DbRepo {
 	var tx *gorm.DB
 
 	if *d == (DbRepo{}) {
-		logging.Log.Info("database connection does not exist, start connecting...")
 		if ret := ConnectDB(); ret != 0 {
 			logging.Log.Error("database connection failed.")
 			return &DbRepo{

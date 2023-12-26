@@ -1,8 +1,9 @@
-package request_model
+package tool
 
 import (
 	"MyCodeArchive_Go/utils/logging"
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -60,5 +61,19 @@ func Rename() {
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
+	}
+}
+
+// PrintFailedMsg cli中如果失败了，通过这个函数进行打印失败原因
+func PrintFailedMsg(reason string, jsonFormat bool) {
+	if jsonFormat {
+		errInfo := map[string]string{
+			"Result": "Failed",
+			"Reason": reason,
+		}
+		output, _ := json.MarshalIndent(errInfo, "", "\t")
+		fmt.Println(string(output))
+	} else {
+		fmt.Printf("Result: Failed\nReason: %s\n", reason)
 	}
 }

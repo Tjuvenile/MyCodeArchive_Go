@@ -1,4 +1,4 @@
-package request_model
+package tool
 
 /**
 关于参数相关的校验和工具方法，放到这里。
@@ -8,8 +8,8 @@ package request_model
 import (
 	"MyCodeArchive_Go/utils/fault"
 	"MyCodeArchive_Go/utils/logging"
-	"MyCodeArchive_Go/utils/request_model/db"
 	mystring "MyCodeArchive_Go/utils/strings_"
+	"MyCodeArchive_Go/utils/tool/db"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -96,10 +96,10 @@ func CheckAccessType(accessType string) *fault.Fault {
 // CheckNameParam 大小规格，检测name只能以大小写字母和数字开头，并且后续字符只能是字母，数字，中划线，下划线
 func CheckNameParam(name string) *fault.Fault {
 	if len(name) == ZeroLen {
-		return fault.ParamLen("name", false, ZeroLen, NameLenMax)
+		return fault.ParamEmpty("name")
 	}
 	if len(name) > NameLenMax {
-		return fault.ParamLen("name", true, ZeroLen, NameLenMax)
+		return fault.ParamLen("name", ZeroLen, NameLenMax)
 	}
 	match, _ := regexp.MatchString(`^[a-zA-Z\d][a-zA-Z\d\-_]*$`, name)
 	if !match {

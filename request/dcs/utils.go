@@ -3,9 +3,9 @@ package dcs
 import (
 	"MyCodeArchive_Go/utils/fault"
 	"MyCodeArchive_Go/utils/logging"
-	"MyCodeArchive_Go/utils/request_model"
-	"MyCodeArchive_Go/utils/request_model/db"
 	"MyCodeArchive_Go/utils/strings_"
+	"MyCodeArchive_Go/utils/tool"
+	"MyCodeArchive_Go/utils/tool/db"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -95,7 +95,7 @@ func getParam(args []byte, funcName string) (interface{}, error) {
 }
 
 func checkNameParam(name string) *fault.Fault {
-	return request_model.CheckNameParam(name)
+	return tool.CheckNameParam(name)
 }
 
 func checkExisted(name, uuid, moduleName string, expectIsExisted bool) *fault.Fault {
@@ -133,9 +133,11 @@ func IsExisted(name, uuid, tableName string) (bool, *fault.Fault) {
 	queryBuilder := dbCon.DbConn.Table(tableName)
 	if name != "" {
 		queryBuilder = queryBuilder.Where("BINARY name = ?", name)
-	} else if uuid != "" {
+	}
+	if uuid != "" {
 		queryBuilder = queryBuilder.Where("uuid = ?", uuid)
-	} else {
+	}
+	if name == "" && uuid == "" {
 		return false, fault.Err(fmt.Sprintf("fail to query %s:%s", name, uuid), errors.New("uuid and name is empty"), fault.QueryRecord)
 	}
 

@@ -4,7 +4,7 @@ import (
 	"MyCodeArchive_Go/utils/fault"
 	"MyCodeArchive_Go/utils/logging"
 	"MyCodeArchive_Go/utils/math_"
-	"MyCodeArchive_Go/utils/request_model/db"
+	"MyCodeArchive_Go/utils/tool/db"
 	"errors"
 	"fmt"
 	"time"
@@ -57,7 +57,7 @@ type DcsStrategies struct {
 	Interval     string    `json:"Interval"`     // 同步间隔
 	StrategyType string    `json:"StrategyType"` // 定时策略类型
 	Description  string    `json:"Description"`
-	CreateTime   time.Time `json:"CreateTime"`
+	CreateTime   time.Time `json:"CreateTime" gorm:"autoCreateTime"`
 }
 
 func DcsRelationsName() string {
@@ -167,7 +167,11 @@ func (re *DcsRelations) List(filterBy, filterValue, order, sortBy string, pageSi
 
 	queryBuilder := dbCon.DbConn.Model(&DcsRelations{})
 	if filterBy != "" && filterValue != "" {
-		queryBuilder = queryBuilder.Where(fmt.Sprintf("%s = ?", filterBy), filterValue).Count(&total)
+		if filterBy == "Name" {
+			queryBuilder = queryBuilder.Where(fmt.Sprintf("BINARY %s = ?", filterBy), filterValue).Count(&total)
+		} else {
+			queryBuilder = queryBuilder.Where(fmt.Sprintf("%s = ?", filterBy), filterValue).Count(&total)
+		}
 	} else {
 		queryBuilder = queryBuilder.Count(&total)
 	}
@@ -228,9 +232,9 @@ func (st *DcsStrategies) Delete() *fault.Fault {
 
 	var err error
 	if len(st.UUID) != 0 {
-		err = dbCon.DbConn.Where("uuid = ?", st.UUID).Delete(&DcsRelations{}).Error
+		err = dbCon.DbConn.Where("uuid = ?", st.UUID).Delete(&DcsStrategies{}).Error
 	} else if len(st.Name) != 0 {
-		err = dbCon.DbConn.Where("BINARY name = ?", st.Name).Delete(&DcsRelations{}).Error
+		err = dbCon.DbConn.Where("BINARY name = ?", st.Name).Delete(&DcsStrategies{}).Error
 	} else {
 		err = errors.New("id and name is empty")
 	}
@@ -248,7 +252,11 @@ func (st *DcsStrategies) List(filterBy, filterValue, order, sortBy string, pageS
 
 	queryBuilder := dbCon.DbConn.Model(&DcsStrategies{})
 	if filterBy != "" && filterValue != "" {
-		queryBuilder = queryBuilder.Where(fmt.Sprintf("%s = ?", filterBy), filterValue).Count(&total)
+		if filterBy == "Name" {
+			queryBuilder = queryBuilder.Where(fmt.Sprintf("BINARY %s = ?", filterBy), filterValue).Count(&total)
+		} else {
+			queryBuilder = queryBuilder.Where(fmt.Sprintf("%s = ?", filterBy), filterValue).Count(&total)
+		}
 	} else {
 		queryBuilder = queryBuilder.Count(&total)
 	}
@@ -279,9 +287,9 @@ func (st *DcsStrategies) Update(update map[string]interface{}) *fault.Fault {
 
 	var err error
 	if len(st.UUID) != 0 {
-		err = dbCon.DbConn.Model(&DcsRelations{}).Where("uuid = ?", st.UUID).Updates(update).Error
+		err = dbCon.DbConn.Model(&DcsStrategies{}).Where("uuid = ?", st.UUID).Updates(update).Error
 	} else if len(st.Name) != 0 {
-		err = dbCon.DbConn.Model(&DcsRelations{}).Where("BINARY name = ?", st.Name).Updates(update).Error
+		err = dbCon.DbConn.Model(&DcsStrategies{}).Where("BINARY name = ?", st.Name).Updates(update).Error
 	} else {
 		err = errors.New("id and name is empty")
 	}

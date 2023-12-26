@@ -2,7 +2,7 @@ package list
 
 import (
 	"MyCodeArchive_Go/utils/fault"
-	"MyCodeArchive_Go/utils/request_model/db"
+	"MyCodeArchive_Go/utils/tool/db"
 	"fmt"
 )
 

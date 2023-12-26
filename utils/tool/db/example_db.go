@@ -4,6 +4,7 @@ import (
 	"MyCodeArchive_Go/utils/fault"
 	"MyCodeArchive_Go/utils/logging"
 	"MyCodeArchive_Go/utils/math_"
+	"database/sql"
 	"fmt"
 	"time"
 )
@@ -347,4 +348,35 @@ func ListRpcIp() ([]string, *fault.Fault) {
 	defer sessionClose()
 
 	return []string{"10.255.0.1"}, nil
+}
+
+// recordStats 关于defer中rollback的用法。 TODO 如果发生panic，还能调用rollback函数吗？
+func recordStats(db *sql.DB, userID, productID int64) (err error) {
+	// 开启事务
+	// 操作views和product_viewers两张表
+	tx, err := db.Begin()
+	if err != nil {
+		return
+	}
+
+	defer func() {
+		switch err {
+		case nil:
+			err = tx.Commit()
+		default:
+			tx.Rollback()
+		}
+	}()
+
+	// 更新products表
+	if _, err = tx.Exec("UPDATE products SET views = views + 1"); err != nil {
+		return
+	}
+	// product_viewers表中插入一条数据
+	if _, err = tx.Exec(
+		"INSERT INTO product_viewers (user_id, product_id) VALUES (?, ?)",
+		userID, productID); err != nil {
+		return
+	}
+	return
 }

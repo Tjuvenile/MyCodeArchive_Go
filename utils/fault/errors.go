@@ -109,23 +109,14 @@ func InvalidParam(paramName, value string) *Fault {
 }
 
 // ParamLen 用来进行参数长度的校验，paramName是参数名称，isLong是来判断此参数是太长了，还是太短了。 以及区间是[low, high]之间
-func ParamLen(paramName string, isLong bool, low, high int) *Fault {
+func ParamLen(paramName string, low, high int) *Fault {
 	rangeNum := fmt.Sprintf("[%d,%d]", low, high)
-	if isLong {
-		logging.Log.Errorf("%q param is too long, the length must be %s", paramName, rangeNum)
-		return CreateFault(
-			"error",
-			fmt.Sprintf("%q param is too long, the length must be %s", paramName, rangeNum),
-			fmt.Sprintf("%q参数超过长度限制,长度需在%s区间内", paramName, rangeNum),
-		)
-	} else {
-		logging.Log.Errorf("parameter %q is empty", paramName)
-		return CreateFault(
-			"error",
-			fmt.Sprintf("parameter %q is empty", paramName),
-			fmt.Sprintf("参数%q为空", paramName),
-		)
-	}
+	logging.Log.Errorf("%q param is too long, the length must be %s", paramName, rangeNum)
+	return CreateFault(
+		"error",
+		fmt.Sprintf("%q param is too long, the length must be %s", paramName, rangeNum),
+		fmt.Sprintf("%q参数超过长度限制,长度需在%s区间内", paramName, rangeNum),
+	)
 }
 
 func ParamEmpty(paramName string) *Fault {

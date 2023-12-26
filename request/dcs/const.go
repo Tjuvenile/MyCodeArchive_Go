@@ -21,6 +21,11 @@ const (
 	OrderDesc                  = "DESC"
 	OrderAsc                   = "ASC"
 
+	Busy       = "busy"
+	Idle       = "idle"
+	Nomal      = "nomal"
+	Incomplete = "incomplete"
+
 	Success = "Success"
 )
 

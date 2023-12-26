@@ -7,12 +7,11 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"strings"
-	"time"
 )
 
 func CreateRelationExe() *fault.Fault {
 	anyParams, err := ParamWrap(map[string]interface{}{
-		"Name": "relation2",
+		"Name": "Relation4",
 	}, CreateRelationFun)
 	if err != nil {
 		return err
@@ -29,27 +28,52 @@ func CreateRelationExe() *fault.Fault {
 		return err
 	}
 
-	relation := DcsRelations{
-		UUID:             uuid.NewString(),
-		Name:             params.Name,
-		MasterPool:       params.MasterPool,
-		SlavePool:        params.SlavePool,
-		MasterResourceId: params.MasterResource.ID,
-		SlaveResourceId:  params.SlaveResource.ID,
-		ResourceType:     params.ResourceType,
-		StrategyIds:      strings.Join(params.StrategyIds, ","),
-		LastSyncTime:     params.LastSyncTime,
-		LastSyncSnap:     params.LastSyncSnap,
-		State:            params.Status,
-		RunningState:     params.RunningState,
-		HealthState:      params.HealthState,
-		DataState:        params.DataState,
-		Role:             params.Role,
-		IsConfigSync:     params.IsConfigSync,
+	for _, strategyUUID := range params.StrategyIds {
+		err = checkExisted("", strategyUUID, StrategyModule, true)
+		if err != nil {
+			return err
+		}
 	}
-	if err = relation.Create(); err != nil {
+
+	// init relation to db
+	initRelation := DcsRelations{
+		UUID:  uuid.NewString(),
+		State: Busy,
+	}
+	if err = initRelation.Create(); err != nil {
 		return err
 	}
+	params.UUID = initRelation.UUID
+	logging.Log.Infof("relation init successfully, UUID: %s", initRelation.UUID)
+
+	updateRelation := DcsRelations{
+		UUID: initRelation.UUID,
+	}
+	if err = updateRelation.Update(map[string]interface{}{
+		"name":               params.Name,
+		"master_pool":        params.MasterPool,
+		"slave_pool":         params.SlavePool,
+		"master_resource_id": params.MasterResource.ID,
+		"slave_resource_id":  params.SlaveResource.ID,
+		"resource_type":      params.ResourceType,
+		"strategy_ids":       strings.Join(params.StrategyIds, ","),
+		"last_sync_time":     params.LastSyncTime,
+		"last_sync_snap":     params.LastSyncSnap,
+		"state":              Idle,
+		"running_state":      Nomal,
+		"health_state":       params.HealthState,
+		"data_state":         Incomplete,
+		"role":               params.Role,
+		"is_config_sync":     params.IsConfigSync,
+	}); err != nil {
+		logging.Log.Infof("rollback uuid:%s", params.UUID)
+		rollbackErr := deleteRelation2DBRollback(params)
+		if rollbackErr != nil {
+			logging.Log.Errorf("rollback failed. %+v", params)
+		}
+		return err
+	}
+
 	fmt.Println("end craete raltions")
 	return nil
 }
@@ -70,7 +94,17 @@ func UpdateRelationExe() *fault.Fault {
 		return err
 	}
 
+	err = checkNameParam(params.NewName)
+	if err != nil {
+		return err
+	}
+
 	err = checkExisted(params.Name, params.UUID, RelationModule, true)
+	if err != nil {
+		return err
+	}
+
+	err = checkExisted(params.NewName, "", RelationModule, false)
 	if err != nil {
 		return err
 	}
@@ -121,7 +155,7 @@ func DeleteRelationExe() *fault.Fault {
 func ShowRelationExe() *fault.Fault {
 	anyParams, err := ParamWrap(map[string]interface{}{
 		"UUID": "",
-		"Name": "relation2",
+		"Name": "relation3",
 	}, ShowRelationFun)
 	if err != nil {
 		return err
@@ -174,7 +208,6 @@ func ListRelationsExe() *fault.Fault {
 	return nil
 }
 
-// TODO 还未验证
 func ListRelationsStrategiesExe() *fault.Fault {
 	anyParams, err := ParamWrap(map[string]interface{}{}, ListRelationsStrategiesFun)
 	if err != nil {
@@ -209,14 +242,14 @@ func ListRelationsStrategiesExe() *fault.Fault {
 		})
 	}
 
-	logging.Log.Infof("%+v", relations)
+	logging.Log.Infof("%+v", relationsStrategies)
 	logging.Log.Infof("lenth: %d", total)
 	return nil
 }
 
-func CreateStrategyExe() *fault.Fault {
+func CreateStrategyExe(name string) *fault.Fault {
 	anyParams, err := ParamWrap(map[string]interface{}{
-		"Name": "strategy1",
+		"Name": name,
 	}, CreateStrategyFun)
 	if err != nil {
 		return err
@@ -240,7 +273,6 @@ func CreateStrategyExe() *fault.Fault {
 		Interval:     params.Interval,
 		StrategyType: params.StrategyType,
 		Description:  params.Description,
-		CreateTime:   time.Time{},
 	}
 	if err = strategy.Create(); err != nil {
 		return err
@@ -251,8 +283,8 @@ func CreateStrategyExe() *fault.Fault {
 
 func DeleteStrategyExe() *fault.Fault {
 	anyParams, err := ParamWrap(map[string]interface{}{
-		"UUID": "",
-		"Name": "relation2",
+		"UUID": "4e3f0123-86ef-4e84-a4e4-a673db294aea",
+		"Name": "",
 	}, DeleteStrategyFun)
 	if err != nil {
 		return err
@@ -269,6 +301,8 @@ func DeleteStrategyExe() *fault.Fault {
 		return err
 	}
 
+	// 检查是否还在被某个复制关系所绑定
+
 	var strategy DcsStrategies
 	strategy.Name = params.Name
 	strategy.UUID = params.UUID
@@ -280,8 +314,10 @@ func DeleteStrategyExe() *fault.Fault {
 
 func UpdateStrategyExe() *fault.Fault {
 	anyParams, err := ParamWrap(map[string]interface{}{
-		"UUID": "",
-		"Name": "relation2",
+		"UUID":        "",
+		"Name":        "relation2",
+		"NewName":     "strategy2",
+		"Description": "desc1&&",
 	}, UpdateStrategyFun)
 	if err != nil {
 		return err
@@ -294,6 +330,16 @@ func UpdateStrategyExe() *fault.Fault {
 	}
 
 	err = checkNameParam(params.NewName)
+	if err != nil {
+		return err
+	}
+
+	err = checkExisted(params.Name, params.UUID, StrategyModule, true)
+	if err != nil {
+		return err
+	}
+
+	err = checkExisted(params.NewName, "", StrategyModule, false)
 	if err != nil {
 		return err
 	}
@@ -313,7 +359,14 @@ func UpdateStrategyExe() *fault.Fault {
 }
 
 func ListStrategiesExe() *fault.Fault {
-	anyParams, err := ParamWrap(map[string]interface{}{}, ListStrategiesFun)
+	anyParams, err := ParamWrap(map[string]interface{}{
+		"PageNumber":  "2",
+		"PageSize":    "3",
+		"SortBy":      "Name",
+		"Order":       "asc",
+		"FilterBy":    "Name",
+		"FilterValue": "",
+	}, ListStrategiesFun)
 	if err != nil {
 		return err
 	}
@@ -327,5 +380,14 @@ func ListStrategiesExe() *fault.Fault {
 
 	logging.Log.Infof("%+v", strategies)
 	logging.Log.Infof("lenth: %d", total)
+	return nil
+}
+
+func deleteRelation2DBRollback(params RelationParam) *fault.Fault {
+	var relation DcsRelations
+	relation.UUID = params.UUID
+	if err := relation.Delete(); err != nil {
+		return err
+	}
 	return nil
 }
