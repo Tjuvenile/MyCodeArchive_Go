@@ -1,16 +1,20 @@
 package tool
 
 import (
+	"MyCodeArchive_Go/utils/fault"
 	"MyCodeArchive_Go/utils/logging"
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 )
 
-// Cmd 需要系统有这个命令，才能去执行
+/* 记录命令相关的函数 */
+
+// ExecLocalCommand Cmd 需要系统有这个命令，才能去执行
 //
 // exec.Command.run会生成一个执行"mv"命令的新进程，产生额外的开销
 // cmd.Run()及cmd.OutPut()本身都会执行cmd.Wait()，它会等待命令执行完之后，再进行下一步。 Run()只会返回程序执行本身的错误，OutPut()会返回执行后的输出
@@ -76,4 +80,16 @@ func PrintFailedMsg(reason string, jsonFormat bool) {
 	} else {
 		fmt.Printf("Result: Failed\nReason: %s\n", reason)
 	}
+}
+
+// CheckPort 检测某个端口是否被正在被监听
+func CheckPort(ip string, port int) *fault.Fault {
+	cmd := exec.Command("nc", "-zv", ip, strconv.Itoa(port))
+
+	output, err := cmd.CombinedOutput()
+	logging.Log.Infof("exec nc -zv %s %s, result: %s", ip, port, output)
+	if err != nil {
+		return fault.Err(fmt.Sprintf("network connection failed for IP %s and port %s", ip, port), err, fault.CmdExec("nc -zv", ip))
+	}
+	return nil
 }

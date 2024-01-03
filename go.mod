@@ -3,14 +3,16 @@ module MyCodeArchive_Go
 go 1.20
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.1
 	github.com/agiledragon/gomonkey v2.0.2+incompatible
 	github.com/google/uuid v1.3.1
+	github.com/selvatico/go-mocket v1.0.7
 	github.com/spf13/cobra v1.8.0
 	go.uber.org/zap v1.26.0
 	google.golang.org/grpc v1.59.0
 	google.golang.org/protobuf v1.31.0
 	gorm.io/driver/mysql v1.5.2
-	gorm.io/gorm v1.25.5
+	gorm.io/gorm v1.25.2-0.20230530020048-26663ab9bf55
 )
 
 require (
