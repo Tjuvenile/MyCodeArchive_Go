@@ -10,26 +10,18 @@ import (
 	"time"
 )
 
-func CreateTable() {
-	dbCon := db.DbConnect.GetConnect()
-	if dbCon.DbConn == nil {
-		logging.Log.Error("fail to get db connect")
-		return
-	}
-
-	if dbCon.CreateTableAuto(&DcsRelations{}) != 0 {
-		logging.Log.Error("failed to create table DcsRelations")
-		return
-	}
-
-	if dbCon.CreateTableAuto(&DcsStrategies{}) != 0 {
-		logging.Log.Error("failed to create table DcsStrategies")
-		return
-	}
-	logging.Log.Infof("end to create DCS table")
+type BgrRepLinkMgt struct {
+	UUID               string `json:"UUID"`
+	Name               string `json:"Name"`
+	LocalNodePoolId    int    `json:"LocalNodePoolId"`
+	RemoteNodePoolId   int    `json:"RemoteNodePoolId"`
+	RemoteDeviceName   string `json:"RemoteDeviceName"`
+	RemoteNodePoolName string `json:"RemoteNodePoolName"`
+	RemoteCtrlIp       string `json:"RemoteCtrlIp"`
+	Status             string `json:"Status"`
 }
 
-type DcsRelations struct {
+type BgrRelations struct {
 	UUID             string    `json:"UUID" gorm:"primary_key"`
 	Name             string    `json:"Name"`
 	MasterPool       string    `json:"MasterPool"`
@@ -50,7 +42,7 @@ type DcsRelations struct {
 	UpdateTime       time.Time `json:"UpdateTime" gorm:"autoUpdateTime"`
 }
 
-type DcsStrategies struct {
+type BgrStrategies struct {
 	UUID         string    `json:"UUID" gorm:"primary_key"`
 	Name         string    `json:"Name"`
 	TimePoint    string    `json:"TimePoint"`    // 定时同步时间
@@ -68,21 +60,21 @@ func DcsStrategiesName() string {
 	return "dcs_strategies"
 }
 
-func (re *DcsRelations) Create() *fault.Fault {
+func (re *BgrRelations) Create() *fault.Fault {
 	dbCon := db.DbConnect.GetConnect()
 	if dbCon.DbConn == nil {
 		logging.Log.Error("fail to get db connect")
 		return fault.ConnectDB
 	}
 
-	ret := dbCon.DbConn.Model(&DcsRelations{}).Create(re)
+	ret := dbCon.DbConn.Model(&BgrRelations{}).Create(re)
 	if ret.Error != nil {
 		return fault.Err(fmt.Sprintf("failed to create %s:%s into database", re.Name, re.UUID), ret.Error, fault.InsertRecord)
 	}
 	return nil
 }
 
-func (re *DcsRelations) Update(update map[string]interface{}) *fault.Fault {
+func (re *BgrRelations) Update(update map[string]interface{}) *fault.Fault {
 	dbCon := db.DbConnect.GetConnect()
 	if dbCon.DbConn == nil {
 		logging.Log.Error("fail to get db connect")
@@ -91,9 +83,9 @@ func (re *DcsRelations) Update(update map[string]interface{}) *fault.Fault {
 
 	var err error
 	if len(re.UUID) != 0 {
-		err = dbCon.DbConn.Model(&DcsRelations{}).Where("uuid = ?", re.UUID).Updates(update).Error
+		err = dbCon.DbConn.Model(&BgrRelations{}).Where("uuid = ?", re.UUID).Updates(update).Error
 	} else if len(re.Name) != 0 {
-		err = dbCon.DbConn.Model(&DcsRelations{}).Where("BINARY name = ?", re.Name).Updates(update).Error
+		err = dbCon.DbConn.Model(&BgrRelations{}).Where("BINARY name = ?", re.Name).Updates(update).Error
 	} else {
 		err = errors.New("id and name is empty")
 	}
@@ -103,7 +95,7 @@ func (re *DcsRelations) Update(update map[string]interface{}) *fault.Fault {
 	return nil
 }
 
-func (re *DcsRelations) Delete() *fault.Fault {
+func (re *BgrRelations) Delete() *fault.Fault {
 	dbCon := db.DbConnect.GetConnect()
 	if dbCon.DbConn == nil {
 		logging.Log.Error("fail to get db connect")
@@ -112,9 +104,9 @@ func (re *DcsRelations) Delete() *fault.Fault {
 
 	var err error
 	if len(re.UUID) != 0 {
-		err = dbCon.DbConn.Where("uuid = ?", re.UUID).Delete(&DcsRelations{}).Error
+		err = dbCon.DbConn.Where("uuid = ?", re.UUID).Delete(&BgrRelations{}).Error
 	} else if len(re.Name) != 0 {
-		err = dbCon.DbConn.Where("BINARY name = ?", re.Name).Delete(&DcsRelations{}).Error
+		err = dbCon.DbConn.Where("BINARY name = ?", re.Name).Delete(&BgrRelations{}).Error
 	} else {
 		err = errors.New("id and name is empty")
 	}
@@ -124,14 +116,14 @@ func (re *DcsRelations) Delete() *fault.Fault {
 	return nil
 }
 
-func (re *DcsRelations) QueryById() *fault.Fault {
+func (re *BgrRelations) QueryById() *fault.Fault {
 	dbCon := db.DbConnect.GetConnect()
 	if dbCon.DbConn == nil {
 		logging.Log.Error("fail to get db connect")
 		return fault.ConnectDB
 	}
 
-	out := dbCon.DbConn.Model(&DcsRelations{}).Where("uuid = ?", re.UUID).Find(re)
+	out := dbCon.DbConn.Model(&BgrRelations{}).Where("uuid = ?", re.UUID).Find(re)
 	if out.Error != nil {
 		return fault.Err(fmt.Sprintf("fail to query %s", re.UUID), out.Error, fault.QueryRecord)
 	}
@@ -141,14 +133,14 @@ func (re *DcsRelations) QueryById() *fault.Fault {
 	return nil
 }
 
-func (re *DcsRelations) QueryByName() *fault.Fault {
+func (re *BgrRelations) QueryByName() *fault.Fault {
 	dbCon := db.DbConnect.GetConnect()
 	if dbCon.DbConn == nil {
 		logging.Log.Error("fail to get db connect")
 		return fault.ConnectDB
 	}
 
-	out := dbCon.DbConn.Model(&DcsRelations{}).Where("BINARY name = ?", re.Name).Find(re)
+	out := dbCon.DbConn.Model(&BgrRelations{}).Where("BINARY name = ?", re.Name).Find(re)
 	if out.Error != nil {
 		return fault.Err(fmt.Sprintf("fail to query %s", re.Name), out.Error, fault.QueryRecord)
 	}
@@ -158,14 +150,14 @@ func (re *DcsRelations) QueryByName() *fault.Fault {
 	return nil
 }
 
-func (re *DcsRelations) List(filterBy, filterValue, order, sortBy string, pageSize, pageNumber int) (list []DcsRelations, total int64, err *fault.Fault) {
+func (re *BgrRelations) List(filterBy, filterValue, order, sortBy string, pageSize, pageNumber int) (list []BgrRelations, total int64, err *fault.Fault) {
 	dbCon := db.DbConnect.GetConnect()
 	if dbCon.DbConn == nil {
 		logging.Log.Error("fail to get db connect")
-		return []DcsRelations{}, 0, fault.ConnectDB
+		return []BgrRelations{}, 0, fault.ConnectDB
 	}
 
-	queryBuilder := dbCon.DbConn.Model(&DcsRelations{})
+	queryBuilder := dbCon.DbConn.Model(&BgrRelations{})
 	if filterBy != "" && filterValue != "" {
 		if filterBy == "Name" {
 			queryBuilder = queryBuilder.Where(fmt.Sprintf("BINARY %s = ?", filterBy), filterValue).Count(&total)
@@ -185,46 +177,46 @@ func (re *DcsRelations) List(filterBy, filterValue, order, sortBy string, pageSi
 	}
 
 	if ret := queryBuilder.Find(&list); ret.Error != nil {
-		return []DcsRelations{}, -1, fault.Err("fail to query list", ret.Error, fault.QueryRecord)
+		return []BgrRelations{}, -1, fault.Err("fail to query list", ret.Error, fault.QueryRecord)
 	}
 
 	if list == nil {
-		return []DcsRelations{}, 0, nil
+		return []BgrRelations{}, 0, nil
 	}
 	return list, total, nil
 }
 
-func (st *DcsStrategies) QueryByIds(ids []string) (list []DcsStrategies, err *fault.Fault) {
+func (st *BgrStrategies) QueryByIds(ids []string) (list []BgrStrategies, err *fault.Fault) {
 	dbCon := db.DbConnect.GetConnect()
 	if dbCon.DbConn == nil {
 		logging.Log.Error("fail to get db connect")
-		return []DcsStrategies{}, fault.ConnectDB
+		return []BgrStrategies{}, fault.ConnectDB
 	}
 
-	ret := dbCon.DbConn.Model(&DcsStrategies{}).Find(&list, ids)
+	ret := dbCon.DbConn.Model(&BgrStrategies{}).Find(&list, ids)
 	if ret.Error != nil {
-		return []DcsStrategies{}, fault.Err("fail to query list", ret.Error, fault.QueryRecord)
+		return []BgrStrategies{}, fault.Err("fail to query list", ret.Error, fault.QueryRecord)
 	}
 	if list == nil {
-		return []DcsStrategies{}, nil
+		return []BgrStrategies{}, nil
 	}
 	return list, nil
 }
 
-func (st *DcsStrategies) Create() *fault.Fault {
+func (st *BgrStrategies) Create() *fault.Fault {
 	dbCon := db.DbConnect.GetConnect()
 	if dbCon.DbConn == nil {
 		return fault.ConnectDB
 	}
 
-	ret := dbCon.DbConn.Model(&DcsStrategies{}).Create(st)
+	ret := dbCon.DbConn.Model(&BgrStrategies{}).Create(st)
 	if ret.Error != nil {
 		return fault.Err(fmt.Sprintf("failed to create %s:%s into database", st.Name, st.UUID), ret.Error, fault.InsertRecord)
 	}
 	return nil
 }
 
-func (st *DcsStrategies) Delete() *fault.Fault {
+func (st *BgrStrategies) Delete() *fault.Fault {
 	dbCon := db.DbConnect.GetConnect()
 	if dbCon.DbConn == nil {
 		return fault.ConnectDB
@@ -232,9 +224,9 @@ func (st *DcsStrategies) Delete() *fault.Fault {
 
 	var err error
 	if len(st.UUID) != 0 {
-		err = dbCon.DbConn.Where("uuid = ?", st.UUID).Delete(&DcsStrategies{}).Error
+		err = dbCon.DbConn.Where("uuid = ?", st.UUID).Delete(&BgrStrategies{}).Error
 	} else if len(st.Name) != 0 {
-		err = dbCon.DbConn.Where("BINARY name = ?", st.Name).Delete(&DcsStrategies{}).Error
+		err = dbCon.DbConn.Where("BINARY name = ?", st.Name).Delete(&BgrStrategies{}).Error
 	} else {
 		err = errors.New("id and name is empty")
 	}
@@ -244,13 +236,13 @@ func (st *DcsStrategies) Delete() *fault.Fault {
 	return nil
 }
 
-func (st *DcsStrategies) List(filterBy, filterValue, order, sortBy string, pageSize, pageNumber int) (list []DcsStrategies, total int64, err *fault.Fault) {
+func (st *BgrStrategies) List(filterBy, filterValue, order, sortBy string, pageSize, pageNumber int) (list []BgrStrategies, total int64, err *fault.Fault) {
 	dbCon := db.DbConnect.GetConnect()
 	if dbCon.DbConn == nil {
-		return []DcsStrategies{}, 0, fault.ConnectDB
+		return []BgrStrategies{}, 0, fault.ConnectDB
 	}
 
-	queryBuilder := dbCon.DbConn.Model(&DcsStrategies{})
+	queryBuilder := dbCon.DbConn.Model(&BgrStrategies{})
 	if filterBy != "" && filterValue != "" {
 		if filterBy == "Name" {
 			queryBuilder = queryBuilder.Where(fmt.Sprintf("BINARY %s = ?", filterBy), filterValue).Count(&total)
@@ -270,16 +262,16 @@ func (st *DcsStrategies) List(filterBy, filterValue, order, sortBy string, pageS
 	}
 
 	if ret := queryBuilder.Find(&list); ret.Error != nil {
-		return []DcsStrategies{}, -1, fault.Err("fail to query list", ret.Error, fault.QueryRecord)
+		return []BgrStrategies{}, -1, fault.Err("fail to query list", ret.Error, fault.QueryRecord)
 	}
 
 	if list == nil {
-		return []DcsStrategies{}, 0, nil
+		return []BgrStrategies{}, 0, nil
 	}
 	return list, total, nil
 }
 
-func (st *DcsStrategies) Update(update map[string]interface{}) *fault.Fault {
+func (st *BgrStrategies) Update(update map[string]interface{}) *fault.Fault {
 	dbCon := db.DbConnect.GetConnect()
 	if dbCon.DbConn == nil {
 		return fault.ConnectDB
@@ -287,9 +279,9 @@ func (st *DcsStrategies) Update(update map[string]interface{}) *fault.Fault {
 
 	var err error
 	if len(st.UUID) != 0 {
-		err = dbCon.DbConn.Model(&DcsStrategies{}).Where("uuid = ?", st.UUID).Updates(update).Error
+		err = dbCon.DbConn.Model(&BgrStrategies{}).Where("uuid = ?", st.UUID).Updates(update).Error
 	} else if len(st.Name) != 0 {
-		err = dbCon.DbConn.Model(&DcsStrategies{}).Where("BINARY name = ?", st.Name).Updates(update).Error
+		err = dbCon.DbConn.Model(&BgrStrategies{}).Where("BINARY name = ?", st.Name).Updates(update).Error
 	} else {
 		err = errors.New("id and name is empty")
 	}
@@ -297,4 +289,15 @@ func (st *DcsStrategies) Update(update map[string]interface{}) *fault.Fault {
 		return fault.Err(fmt.Sprintf("fail to update relation %s:%s", st.Name, st.UUID), err, fault.UpdateRecord)
 	}
 	return nil
+}
+
+type RepLinkMgt struct {
+	uuid               string // 复制链路的uuid
+	Name               string // 复制链路名称
+	LocalNodePoolId    int    // 本端节点池id
+	RemoteNodePoolId   int    // 远端节点池id
+	RemoteDeviceName   string // 远端设备名称
+	RemoteNodePoolName string // 远端节点池名称
+	RemoteCtrlIp       string // 远端控制节点复制网ip
+	Status             string
 }

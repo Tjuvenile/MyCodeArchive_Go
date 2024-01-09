@@ -56,13 +56,13 @@ func TestDcsRelations_Create(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		args       dcs.DcsRelations
+		args       dcs.BgrRelations
 		want       *fault.Fault
-		mockExpect func(dcs.DcsRelations)
+		mockExpect func(dcs.BgrRelations)
 	}{
 		{
 			name: "create relation1",
-			args: dcs.DcsRelations{
+			args: dcs.BgrRelations{
 				UUID:             uuid.New().String(),
 				Name:             "relation1",
 				MasterPool:       "pool_test",
@@ -83,7 +83,7 @@ func TestDcsRelations_Create(t *testing.T) {
 				UpdateTime:       time.Now(),
 			},
 			want: nil,
-			mockExpect: func(args dcs.DcsRelations) {
+			mockExpect: func(args dcs.BgrRelations) {
 				// 如果不加begin，会报错，显示begin语句未被捕捉到。
 				mock.ExpectBegin()
 				// args为空时可以匹配所有参数。 如果想让单测更敏感，可以把参数都精确的填写下来。 如果你的sql语句需要参数，但是你没有withargs，会报错

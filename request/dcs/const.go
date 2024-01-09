@@ -72,8 +72,8 @@ type StrategyParam struct {
 }
 
 type RelationsStrategies struct {
-	DcsRelations
-	Strategies []DcsStrategies `json:"Strategies"`
+	BgrRelations
+	Strategies []BgrStrategies `json:"Strategies"`
 }
 
 type FilterParam struct {

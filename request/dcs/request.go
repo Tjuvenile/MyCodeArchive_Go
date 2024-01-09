@@ -36,7 +36,7 @@ func CreateRelationExe() *fault.Fault {
 	}
 
 	// init relation to db
-	initRelation := DcsRelations{
+	initRelation := BgrRelations{
 		UUID:  uuid.NewString(),
 		State: Busy,
 	}
@@ -46,7 +46,7 @@ func CreateRelationExe() *fault.Fault {
 	params.UUID = initRelation.UUID
 	logging.Log.Infof("relation init successfully, UUID: %s", initRelation.UUID)
 
-	updateRelation := DcsRelations{
+	updateRelation := BgrRelations{
 		UUID: initRelation.UUID,
 	}
 	if err = updateRelation.Update(map[string]interface{}{
@@ -109,7 +109,7 @@ func UpdateRelationExe() *fault.Fault {
 		return err
 	}
 
-	var relation DcsRelations
+	var relation BgrRelations
 	relation.Name = params.Name
 	relation.UUID = params.UUID
 	update := map[string]interface{}{
@@ -142,7 +142,7 @@ func DeleteRelationExe() *fault.Fault {
 		return err
 	}
 
-	var relation DcsRelations
+	var relation BgrRelations
 	relation.Name = params.Name
 	relation.UUID = params.UUID
 	if err = relation.Delete(); err != nil {
@@ -172,7 +172,7 @@ func ShowRelationExe() *fault.Fault {
 		return err
 	}
 
-	relation := DcsRelations{UUID: params.UUID, Name: params.Name}
+	relation := BgrRelations{UUID: params.UUID, Name: params.Name}
 	if len(params.UUID) != 0 {
 		err = relation.QueryById()
 	} else {
@@ -197,7 +197,7 @@ func ListRelationsExe() *fault.Fault {
 		return err
 	}
 
-	var relationDb DcsRelations
+	var relationDb BgrRelations
 	relations, total, err := relationDb.List(params.FilterBy, params.FilterValue, params.Order, params.SortBy, params.PageSize, params.PageNumber)
 	if err != nil {
 		return err
@@ -220,13 +220,13 @@ func ListRelationsStrategiesExe() *fault.Fault {
 		return err
 	}
 
-	var relationDb DcsRelations
+	var relationDb BgrRelations
 	relations, total, err := relationDb.List(params.FilterBy, params.FilterValue, params.Order, params.SortBy, params.PageSize, params.PageNumber)
 	if err != nil {
 		return err
 	}
 
-	var strategyDb DcsStrategies
+	var strategyDb BgrStrategies
 	relationsStrategies := []RelationsStrategies{}
 	for _, relation := range relations {
 		strategies, err := strategyDb.QueryByIds(strings.Split(relation.StrategyIds, ","))
@@ -237,7 +237,7 @@ func ListRelationsStrategiesExe() *fault.Fault {
 			strategies[index].Description = strings_.UnquoteString(strategy.Description)
 		}
 		relationsStrategies = append(relationsStrategies, RelationsStrategies{
-			DcsRelations: relation,
+			BgrRelations: relation,
 			Strategies:   strategies,
 		})
 	}
@@ -266,7 +266,7 @@ func CreateStrategyExe(name string) *fault.Fault {
 		return err
 	}
 
-	strategy := DcsStrategies{
+	strategy := BgrStrategies{
 		UUID:         uuid.NewString(),
 		Name:         params.Name,
 		TimePoint:    params.TimePoint,
@@ -303,7 +303,7 @@ func DeleteStrategyExe() *fault.Fault {
 
 	// 检查是否还在被某个复制关系所绑定
 
-	var strategy DcsStrategies
+	var strategy BgrStrategies
 	strategy.Name = params.Name
 	strategy.UUID = params.UUID
 	if err = strategy.Delete(); err != nil {
@@ -344,7 +344,7 @@ func UpdateStrategyExe() *fault.Fault {
 		return err
 	}
 
-	var strategy DcsStrategies
+	var strategy BgrStrategies
 	strategy.UUID = params.UUID
 	strategy.Name = params.Name
 	update := map[string]interface{}{
@@ -372,7 +372,7 @@ func ListStrategiesExe() *fault.Fault {
 	}
 	params := anyParams.(FilterParam)
 
-	var strategyDb DcsStrategies
+	var strategyDb BgrStrategies
 	strategies, total, err := strategyDb.List(params.FilterBy, params.FilterValue, params.Order, params.SortBy, params.PageSize, params.PageNumber)
 	if err != nil {
 		return err
@@ -384,7 +384,7 @@ func ListStrategiesExe() *fault.Fault {
 }
 
 func deleteRelation2DBRollback(params RelationParam) *fault.Fault {
-	var relation DcsRelations
+	var relation BgrRelations
 	relation.UUID = params.UUID
 	if err := relation.Delete(); err != nil {
 		return err
