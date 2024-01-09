@@ -36,6 +36,8 @@ func init() {
 		zapcore.AddSync(file),
 		zap.InfoLevel,
 	)
+	// 默认是会打印到标准输出的，如果只想把日志打印到文件里，可以不打印标准输出，这样单元测试的时候，就不会打印log了
+	// witeSyncer = zapcore.NewMultiWriteSyncer(witeSyncer, zapcore.AddSync(os.Stdout))
 
 	//设置为开发模式会记录panic
 	development := zap.Development()

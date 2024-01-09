@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 	"reflect"
 	"testing"
 	"time"
@@ -27,7 +28,10 @@ func getDBMock() (sqlmock.Sqlmock, *gomonkey.Patches, error) {
 		Conn:                      sqlDb, // 使用上面创建的 mock *sql.DB 对象
 		DriverName:                "mysql",
 		SkipInitializeWithVersion: true, // 如果此选项不设置，gorm初始化时会调用select version()，如果sqlmock没有mock这个调用则会报错。
-	}), &gorm.Config{})
+	}), &gorm.Config{
+		// silent是最高级别，只记录slient及以上的日志
+		Logger: logger.Default.LogMode(logger.Silent),
+	})
 	if err != nil {
 		return nil, nil, err
 	}
@@ -44,11 +48,11 @@ func getDBMock() (sqlmock.Sqlmock, *gomonkey.Patches, error) {
 }
 
 func TestDcsRelations_Create(t *testing.T) {
-	mock, patch, err := getDBMock()
+	mock, funcPatch, err := getDBMock()
 	if err != nil {
 		t.Errorf("Error get gorm connection and sql mock: %v", err)
 	}
-	defer patch.Reset()
+	defer funcPatch.Reset()
 
 	tests := []struct {
 		name       string
