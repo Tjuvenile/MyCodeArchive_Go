@@ -1,7 +1,7 @@
 package rpc
 
 import (
-	"MyCodeArchive_Go/utils/tool"
+	"MyCodeArchive_Go/utils"
 	"bufio"
 	"errors"
 	"flag"
@@ -85,7 +85,7 @@ func (rpc *ganeshaRpc) SaveConfigToLocal(svc Ganesha_SaveConfigToLocalServer) er
 	}
 
 	log.Printf("move conf from %s to %s", ConfPath, StorageConfPath)
-	ret, err := tool.ExecLocalCommand("mv", fmt.Sprintf("%s %s", ConfPath, StorageConfPath))
+	ret, err := utils.ExecLocalCommand("mv", fmt.Sprintf("%s %s", ConfPath, StorageConfPath))
 	if err != nil {
 		log.Printf("move conf from %s to %s failed, %v", ConfPath, StorageConfPath, err)
 		return errors.New(ret[StdErr])

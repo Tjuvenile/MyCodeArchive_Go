@@ -1,4 +1,4 @@
-package tool
+package utils
 
 /**
 关于参数相关的校验和工具方法，放到这里。
@@ -6,10 +6,10 @@ package tool
 */
 
 import (
+	"MyCodeArchive_Go/utils/db"
 	"MyCodeArchive_Go/utils/fault"
 	"MyCodeArchive_Go/utils/logging"
 	mystring "MyCodeArchive_Go/utils/strings_"
-	"MyCodeArchive_Go/utils/tool/db"
 	"encoding/json"
 	"errors"
 	"fmt"

@@ -44,6 +44,16 @@ var (
 		"network is not reachable",
 		"网络不可达",
 	)
+	FaultDecryptPassword = CreateFault(
+		"error",
+		"Failed to decrypt password",
+		"密码解密失败",
+	)
+	FaultEncryptPassword = CreateFault(
+		"error",
+		"Failed to encrypt password",
+		"密码加密失败",
+	)
 	MatchName = CreateFault(
 		"error",
 		"The 'name' must start with a letter or a digit, and can only contain letters, digits, hyphens, and underscores",

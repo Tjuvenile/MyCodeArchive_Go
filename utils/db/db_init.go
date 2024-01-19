@@ -183,3 +183,66 @@ func (d *DbRepo) CreateTable(table interface{}) int {
 	}
 	return 0
 }
+
+/*
+************************************************
+函数名称:   QueryTuples
+功能描述:   查询表中符合条件的记录
+函数入参:   condition：查询条件；sqlEnv：查询关键字（使用SqlEnv map[string]int{}）
+函数出参:   value：接收查询记录的对象
+返回结果:   int：0为正常，非0为异常
+其他说明:   SqlEnv = map[string]int{"EQUAL": 1, "NOT": 2, "LIKE": 3}；map为空时查询表所有记录
+************************************************
+*/
+func (d *DbRepo) QueryTuples(value interface{}, condition map[string]interface{}, sqlEnv int) int {
+	var err error
+	switch sqlEnv {
+	case 1: //EQUAL
+		for i := 0; i < maxRetries; i++ {
+			if err = d.DbConn.Where(condition).Find(value).Error; err == nil {
+				break
+			}
+		}
+	case 2: //NOT
+		for i := 0; i < maxRetries; i++ {
+			if err = d.DbConn.Not(condition).Find(value).Error; err == nil {
+				break
+			}
+		}
+	case 3: //LIKE
+		var str string
+		array := make([]interface{}, len(condition))
+		if condition != nil {
+			loop := 0
+			for c := range condition {
+				if v, ok := condition[c].(string); ok {
+					array[loop] = "%" + v + "%"
+				} else {
+					logging.Log.Error("ERROR: Func QueryTuples with 'LIKE' must use map[string][string], please check.")
+					return 1
+				}
+				if loop != 0 {
+					str += " AND " + c + " LIKE ?"
+				} else {
+					str += c + " LIKE ?"
+				}
+				loop++
+			}
+		}
+		for i := 0; i < maxRetries; i++ {
+			if err = d.DbConn.Where(str, array...).Find(value).Error; err == nil {
+				break
+			}
+		}
+	default:
+		logging.Log.Error("Arg \"sqlEnv\" must be among [1-3], or use Map \"SqlEnv\"")
+		return 1
+	}
+	if err != nil {
+		logging.Log.Error(err)
+		logging.Log.Error("Query failed!")
+		return 1
+	}
+	//logging.LogEngine.Info("Query completed.")
+	return 0
+}

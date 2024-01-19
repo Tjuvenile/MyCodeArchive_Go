@@ -1,24 +1,16 @@
 package main
 
 import (
-	"MyCodeArchive_Go/cmd"
-	"fmt"
+	"MyCodeArchive_Go/utils/strings_"
 )
 
 func init() {
-	cmd.Execute()
+	//cmd.Execute()
 }
 
 func main() {
-	//err := dcs.CreateRelationExe()
-	//if err != nil {
-	//	logging.Log.Errorf(fmt.Sprintf("%+v", err))
-	//}
-	s := [3]int{1, 2}
-	s2 := s[:1]
-	s2 = append(s2, 444)
-	fmt.Println(cap(s))
-	fmt.Println(len(s))
+	strings_.EncryptExample("admin")
+	strings_.EncryptExample("123456")
 }
 
 // User 是一个示例 GORM 模型

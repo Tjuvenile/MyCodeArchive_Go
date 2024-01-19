@@ -9,6 +9,8 @@ import (
 	"strings"
 )
 
+/* 复制关系（pair）和策略 */
+
 func CreateRelationExe() *fault.Fault {
 	anyParams, err := ParamWrap(map[string]interface{}{
 		"Name": "Relation4",
@@ -60,7 +62,7 @@ func CreateRelationExe() *fault.Fault {
 		"last_sync_time":     params.LastSyncTime,
 		"last_sync_snap":     params.LastSyncSnap,
 		"state":              Idle,
-		"running_state":      Nomal,
+		"running_state":      Normal,
 		"health_state":       params.HealthState,
 		"data_state":         Incomplete,
 		"role":               params.Role,
@@ -389,5 +391,102 @@ func deleteRelation2DBRollback(params RelationParam) *fault.Fault {
 	if err := relation.Delete(); err != nil {
 		return err
 	}
+	return nil
+}
+
+/* 复制链路 */
+
+// CreateLinkExe
+/**
+map[string]interface{}{
+		"Name":           "link1",
+		"LocalNodePool":  "localPool",
+		"RemoteNodePool": "remotePool",
+		"SecretLabel":    "mySecretLabel",
+		"SecretKey":      "mySecretKey",
+		"RemoteIP":       "192.168.1.1",
+	}
+*/
+func CreateLinkExe(param map[string]interface{}) *fault.Fault {
+	anyParams, err := ParamWrap(param, CreateLinkFunc)
+	if err != nil {
+		return err
+	}
+	params := anyParams.(LinkParam)
+
+	// step 1 pre check
+	var nodePool string
+	if params.IsRemote {
+		// TODO 解密、认证
+		nodePool = params.RemoteNodePool
+	} else {
+		// TODO 对标签和秘钥加密
+		nodePool = params.LocalNodePool
+	}
+
+	// TODO 节点池加锁
+
+	// TODO 复制链路加锁
+
+	// Check
+	nodePoolId, err := checkNodePollNormal(nodePool)
+	if err != nil {
+		return err
+	}
+
+	err = checkExisted(params.Name, "", LinkModule, false)
+	if err != nil {
+		return err
+	}
+
+	// step2 数据库
+	initLink := BgrRepLinkMgt{
+		UUID:            uuid.NewString(),
+		Status:          Creating,
+		LocalNodePoolId: nodePoolId,
+	}
+	if err = initLink.Create(); err != nil {
+		return err
+	}
+
+	if params.IsRemote {
+		// TODO 复制链路解锁，节点池解锁
+	}
+
+	// step 3  调用远端
+	if !params.IsRemote {
+		return nil
+	}
+	// TODO sendRequestToLeader 复制网ip
+
+	updateRelation := BgrRelations{
+		UUID: initRelation.UUID,
+	}
+	if err = updateRelation.Update(map[string]interface{}{
+		"name":               params.Name,
+		"master_pool":        params.MasterPool,
+		"slave_pool":         params.SlavePool,
+		"master_resource_id": params.MasterResource.ID,
+		"slave_resource_id":  params.SlaveResource.ID,
+		"resource_type":      params.ResourceType,
+		"strategy_ids":       strings.Join(params.StrategyIds, ","),
+		"last_sync_time":     params.LastSyncTime,
+		"last_sync_snap":     params.LastSyncSnap,
+		"state":              Idle,
+		"running_state":      Normal,
+		"health_state":       params.HealthState,
+		"data_state":         Incomplete,
+		"role":               params.Role,
+		"is_config_sync":     params.IsConfigSync,
+	}); err != nil {
+		logging.Log.Infof("rollback uuid:%s", params.UUID)
+		rollbackErr := deleteRelation2DBRollback(params)
+		if rollbackErr != nil {
+			logging.Log.Errorf("rollback failed. %+v", params)
+		}
+		return err
+	}
+
+	fmt.Println("end craete raltions")
 	return nil
 }

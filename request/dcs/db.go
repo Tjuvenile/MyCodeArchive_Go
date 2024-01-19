@@ -1,25 +1,14 @@
 package dcs
 
 import (
+	"MyCodeArchive_Go/utils/db"
 	"MyCodeArchive_Go/utils/fault"
 	"MyCodeArchive_Go/utils/logging"
 	"MyCodeArchive_Go/utils/math_"
-	"MyCodeArchive_Go/utils/tool/db"
 	"errors"
 	"fmt"
 	"time"
 )
-
-type BgrRepLinkMgt struct {
-	UUID               string `json:"UUID"`
-	Name               string `json:"Name"`
-	LocalNodePoolId    int    `json:"LocalNodePoolId"`
-	RemoteNodePoolId   int    `json:"RemoteNodePoolId"`
-	RemoteDeviceName   string `json:"RemoteDeviceName"`
-	RemoteNodePoolName string `json:"RemoteNodePoolName"`
-	RemoteCtrlIp       string `json:"RemoteCtrlIp"`
-	Status             string `json:"Status"`
-}
 
 type BgrRelations struct {
 	UUID             string    `json:"UUID" gorm:"primary_key"`
@@ -52,12 +41,16 @@ type BgrStrategies struct {
 	CreateTime   time.Time `json:"CreateTime" gorm:"autoCreateTime"`
 }
 
-func DcsRelationsName() string {
-	return "dcs_relations"
+func BgrRelationsName() string {
+	return "bgr_relations"
 }
 
-func DcsStrategiesName() string {
-	return "dcs_strategies"
+func BgrStrategiesName() string {
+	return "bgr_strategies"
+}
+
+func BgrRepLinkMgtName() string {
+	return "bgr_rep_link_mgr"
 }
 
 func (re *BgrRelations) Create() *fault.Fault {
@@ -291,13 +284,52 @@ func (st *BgrStrategies) Update(update map[string]interface{}) *fault.Fault {
 	return nil
 }
 
-type RepLinkMgt struct {
-	uuid               string // 复制链路的uuid
-	Name               string // 复制链路名称
-	LocalNodePoolId    int    // 本端节点池id
-	RemoteNodePoolId   int    // 远端节点池id
-	RemoteDeviceName   string // 远端设备名称
-	RemoteNodePoolName string // 远端节点池名称
-	RemoteCtrlIp       string // 远端控制节点复制网ip
-	Status             string
+type NodePoolMgt struct {
+	ID           uint `gorm:"primary_key"`
+	NodePoolId   string
+	NodePoolName string
+	Status       string
+	CreateTime   time.Time `json:"CreateTime" gorm:"autoCreateTime"`
+	UpdateTime   time.Time `json:"UpdateTime" gorm:"autoUpdateTime"`
+}
+
+func (nodePoolMgt *NodePoolMgt) Query(where map[string]interface{}, sqlEnv int) (ret []NodePoolMgt, err *fault.Fault) {
+	dbCon, err1 := db.GetConnect()
+	if err1 != nil {
+		logging.Log.Errorf("failed to get session from db")
+		return nil, fault.ConnectDB
+	}
+	if out := dbCon.QueryTuples(&ret, where, sqlEnv); out != 0 {
+		return nil, fault.QueryRecord
+	}
+
+	if ret != nil && len(ret) == 0 {
+		return nil, fault.QueryRecord
+	}
+	return ret, nil
+}
+
+type BgrRepLinkMgt struct {
+	UUID               string `json:"UUID" gorm:"primary_key"` // 复制链路uuid
+	Name               string `json:"Name"`
+	LocalNodePoolId    uint   `json:"LocalNodePoolId"`    // 本端节点池id
+	RemoteNodePoolId   uint   `json:"RemoteNodePoolId"`   // 远端节点池id
+	RemoteDeviceName   string `json:"RemoteDeviceName"`   // 远端设备名称
+	RemoteNodePoolName string `json:"RemoteNodePoolName"` // 远端节点池名称
+	RemoteCtrlIp       string `json:"RemoteCtrlIp"`       // 远端控制节点复制网ip
+	Status             string `json:"Status"`
+}
+
+func (re *BgrRepLinkMgt) Create() *fault.Fault {
+	dbCon := db.DbConnect.GetConnect()
+	if dbCon.DbConn == nil {
+		logging.Log.Error("fail to get db connect")
+		return fault.ConnectDB
+	}
+
+	ret := dbCon.DbConn.Model(&BgrRepLinkMgt{}).Create(re)
+	if ret.Error != nil {
+		return fault.Err(fmt.Sprintf("failed to create %s:%s into database", re.Name, re.UUID), ret.Error, fault.InsertRecord)
+	}
+	return nil
 }

@@ -5,8 +5,10 @@ const (
 	NameLenMax  = 256
 	PageSizeMax = 100
 
-	RelationModule             = "relation"
-	StrategyModule             = "strategy"
+	RelationModule = "relation"
+	StrategyModule = "strategy"
+	LinkModule     = "link"
+
 	CreateRelationFun          = "CreateRelationFun"
 	DeleteRelationFun          = "DeleteRelationFun"
 	UpdateRelationFun          = "UpdateRelationFun"
@@ -18,13 +20,17 @@ const (
 	UpdateStrategyFun          = "UpdateStrategyFun"
 	ShowStrategyFun            = "ShowStrategyFun"
 	ListStrategiesFun          = "ListStrategiesFun"
-	OrderDesc                  = "DESC"
-	OrderAsc                   = "ASC"
+
+	CreateLinkFunc = "CreateLinkFunc"
+
+	OrderDesc = "DESC"
+	OrderAsc  = "ASC"
 
 	Busy       = "busy"
 	Idle       = "idle"
-	Nomal      = "nomal"
+	Normal     = "normal"
 	Incomplete = "incomplete"
+	Creating   = "Creating"
 
 	Success = "Success"
 )
@@ -120,4 +126,14 @@ type StrategyUpdateParam struct {
 	Name        string `json:"Name"`
 	NewName     string `json:"NewName"`
 	Description string `json:"Description"`
+}
+
+type LinkParam struct {
+	Name           string `json:"Name"`
+	LocalNodePool  string `json:"LocalNodePool"`
+	RemoteNodePool string `json:"RemoteNodePool"`
+	SecretLabel    string `json:"SecretLabel"`
+	SecretKey      string `json:"SecretKey"`
+	RemoteIP       string `json:"RemoteIP"`
+	IsRemote       bool   `json:"IsRemote"` // 是否为远端leader
 }

@@ -1,11 +1,11 @@
 package dcs
 
 import (
+	"MyCodeArchive_Go/utils"
+	db2 "MyCodeArchive_Go/utils/db"
 	"MyCodeArchive_Go/utils/fault"
 	"MyCodeArchive_Go/utils/logging"
 	"MyCodeArchive_Go/utils/strings_"
-	"MyCodeArchive_Go/utils/tool"
-	"MyCodeArchive_Go/utils/tool/db"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -89,13 +89,33 @@ func getParam(args []byte, funcName string) (interface{}, error) {
 		params := BaseParam{}
 		err := json.Unmarshal(args, &params)
 		return params, err
+	case CreateLinkFunc:
+		params := LinkParam{}
+		err := json.Unmarshal(args, &params)
+		return params, err
 	default:
 		return nil, errors.New(fmt.Sprintf("invalid funcName %s", funcName))
 	}
 }
 
 func checkNameParam(name string) *fault.Fault {
-	return tool.CheckNameParam(name)
+	return utils.CheckNameParam(name)
+}
+
+func checkExistedSimple(name string, expectIsExisted bool) *fault.Fault {
+	example := db2.ExampleDb{}
+	isExisted, err := example.IsExist(name)
+	if err != nil {
+		return err
+	}
+
+	logging.Log.Infof("name %s,  expectIsExisted is %t, isExisted is %t", name, expectIsExisted, isExisted)
+	if expectIsExisted && !isExisted {
+		return fault.NotExist("link", name)
+	} else if !expectIsExisted && isExisted {
+		return fault.Existed("link", name)
+	}
+	return nil
 }
 
 func checkExisted(name, uuid, moduleName string, expectIsExisted bool) *fault.Fault {
@@ -103,9 +123,11 @@ func checkExisted(name, uuid, moduleName string, expectIsExisted bool) *fault.Fa
 	var err *fault.Fault
 	switch moduleName {
 	case RelationModule:
-		isExisted, err = IsExisted(name, uuid, DcsRelationsName())
+		isExisted, err = IsExisted(name, uuid, BgrRelationsName())
 	case StrategyModule:
-		isExisted, err = IsExisted(name, uuid, DcsStrategiesName())
+		isExisted, err = IsExisted(name, uuid, BgrStrategiesName())
+	case LinkModule:
+		isExisted, err = IsExisted(name, uuid, BgrRepLinkMgtName())
 	default:
 		return fault.Wrap(
 			fmt.Sprintf("not found the module name %q", moduleName), fmt.Sprintf("没有找到这个模块%q", moduleName))
@@ -124,7 +146,7 @@ func checkExisted(name, uuid, moduleName string, expectIsExisted bool) *fault.Fa
 }
 
 func IsExisted(name, uuid, tableName string) (bool, *fault.Fault) {
-	dbCon := db.DbConnect.GetConnect()
+	dbCon := db2.DbConnect.GetConnect()
 	if dbCon.DbConn == nil {
 		logging.Log.Error("fail to get db connect")
 		return false, fault.ConnectDB
@@ -203,4 +225,32 @@ func CheckOrderParam(order, sort string) *fault.Fault {
 		return fault.ParamEmpty("order")
 	}
 	return nil
+}
+
+func checkNodePollNormal(localPoolLabel string) (uint, *fault.Fault) {
+	// TODO localpoolLabel为什么是id/name？
+	var nodePoolMgt NodePoolMgt
+	nodePools, err := nodePoolMgt.Query(
+		map[string]interface{}{"node_pool_id": localPoolLabel}, 1)
+	if err != nil {
+		logging.Log.Errorf("fail to query nodePoolMgt: %v", err)
+		return 0, err
+	}
+	if len(nodePools) == 0 {
+		nodePools, err = nodePoolMgt.Query(
+			map[string]interface{}{"node_pool_id": localPoolLabel}, 1)
+		if err != nil {
+			logging.Log.Errorf("fail to query nodePoolMgt: %v", err)
+			return 0, err
+		}
+		if len(nodePools) == 0 {
+			logging.Log.Errorf("nodePool not exist: %v", err)
+			return 0, err
+		}
+	}
+	if nodePools[0].Status != Normal {
+		logging.Log.Errorf("nodePool status is not normal: %s, %v", nodePools[0].Status, err)
+		return 0, err
+	}
+	return nodePools[0].ID, nil
 }
