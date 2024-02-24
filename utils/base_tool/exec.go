@@ -1,4 +1,4 @@
-package utils
+package base_tool
 
 import (
 	"MyCodeArchive_Go/utils/fault"
@@ -92,4 +92,50 @@ func CheckPort(ip string, port int) *fault.Fault {
 		return fault.Err(fmt.Sprintf("network connection failed for IP %s and port %s", ip, port), err, fault.CmdExec("nc -zv", ip))
 	}
 	return nil
+}
+
+// AutoWiki 自动生成大包wiki
+func AutoWiki(day, pkgVersion, pkgTime, ceastorBranch string) {
+	// 替换的变量
+	packageName := fmt.Sprintf("CeaStor_3.2.1-%s_debug-%s_x86_64.tar.gz、CeaStor_3.2.1-%s_debug-%s_aarch64.tar.gz", pkgVersion, pkgTime, pkgVersion, pkgTime)
+	tag := fmt.Sprintf("tag-CeaStor-3.2.1-%s-%s", pkgVersion, pkgTime)
+	x86Package := fmt.Sprintf("CeaStor_3.2.1-%s_debug-%s_x86_64.tar.gz", pkgVersion, pkgTime)
+	// 原始文本
+	rawText := `ceastor出包成功
+%s 前合入
+包名: %s
+底座: %s
+tag: %s
+71: /ceastor/CI_master
+取包: 
+smbclient -c 'get 01_ceastor/01_master/3.2.1/ceastor-3.2.1-%s-debug/amd64/%s' //samba.cestc.cn/存储开发部/ -U %s -t 120
+取包报错: Connection to samba.cestc.cn failed
+解决: vi /etc/hosts     # 加上: 10.32.43.2 samba.cestc.cn
+`
+	// 替换变量
+	formattedText := fmt.Sprintf(rawText,
+		day,
+		packageName,
+		ceastorBranch,
+		tag,
+		pkgVersion,
+		fmt.Sprintf("%s %s", x86Package, x86Package),
+		"sdp%sdp@123",
+	)
+	// 指定文件名
+	fileName := "text"
+	// 打开文件，如果文件不存在则创建新文件，以覆盖的方式写入
+	file, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+	if err != nil {
+		fmt.Println("Error opening file:", err)
+		return
+	}
+	defer file.Close()
+	// 将文本写入文件
+	_, err = file.WriteString(formattedText)
+	if err != nil {
+		fmt.Println("Error writing to file:", err)
+	} else {
+		fmt.Println("Text written to file successfully.")
+	}
 }

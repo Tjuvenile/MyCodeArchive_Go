@@ -1,4 +1,4 @@
-package utils
+package base_tool
 
 /**
 关于参数相关的校验和工具方法，放到这里。
@@ -48,8 +48,8 @@ type SearchParam struct {
 	FilterValue string `json:"FilterValue"`
 }
 
-// PerformCommonSetup 通用的获取参数，绑定到对应结构体上
-func PerformCommonSetup(args []byte, funcName string) (interface{}, *fault.Fault) {
+// CommonSetup 通用的获取参数，绑定到对应结构体上
+func CommonSetup(args []byte, funcName string) (interface{}, *fault.Fault) {
 	params, err := getParam(args, funcName)
 	if err != nil {
 		logging.Log.Errorf("fail to parse payload: %v %s", err, args)

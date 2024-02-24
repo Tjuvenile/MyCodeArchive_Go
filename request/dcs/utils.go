@@ -1,7 +1,7 @@
 package dcs
 
 import (
-	"MyCodeArchive_Go/utils"
+	"MyCodeArchive_Go/utils/base_tool"
 	db2 "MyCodeArchive_Go/utils/db"
 	"MyCodeArchive_Go/utils/fault"
 	"MyCodeArchive_Go/utils/logging"
@@ -99,7 +99,7 @@ func getParam(args []byte, funcName string) (interface{}, error) {
 }
 
 func checkNameParam(name string) *fault.Fault {
-	return utils.CheckNameParam(name)
+	return base_tool.CheckNameParam(name)
 }
 
 func checkExistedSimple(name string, expectIsExisted bool) *fault.Fault {
